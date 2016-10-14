@@ -1,0 +1,6 @@
+[package]
+name = "restmote-control-rs"
+version = "0.1.0"
+authors = ["Wilson Giese <giese.wilson@gmail.com>"]
+
+[dependencies]
