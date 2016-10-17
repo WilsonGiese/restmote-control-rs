@@ -1,4 +1,9 @@
+extern crate getopts;
+use getopts::Options;
+
+use std::env;
 use std::process::Command;
+
 
 fn main() {
     activate_application("TextEdit");
