@@ -1,9 +1,11 @@
+extern crate core_graphics;
+use core_graphics::event::{CGEvent,CGEventRef,CGEventFlags,CGEventTapLocation,CGKeyCode};
+
 extern crate getopts;
 use getopts::Options;
 
 use std::env;
 use std::process::Command;
-
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -19,7 +21,7 @@ fn main() {
             return;
         }
     };
-    
+
     let target = match matches.opt_str("t") {
         Some(t) => t,
         None    => {
