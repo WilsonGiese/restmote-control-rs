@@ -42,9 +42,17 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn send_string_as_keystrokes(s: &str) {
+fn send_keyboard_event(keycode: CGKeyCode, keydown: bool) {
+    let event = CGEvent::new(keycode, keydown);
+    match event {
+        Ok(event) => event.post(CGEventTapLocation::HIDEventTap),
+        Err(_) => println!("Err")
+    }
+}
+
+fn activate_application(name: &str) {
     Command::new("osascript")
             .arg("-e")
-            .arg(format!("tell application \"System Events\" to keystroke \"{}\"", s))
+            .arg(format!("activate application\"{}\"", name))
             .output();
 }
