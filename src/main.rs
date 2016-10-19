@@ -1,5 +1,5 @@
 extern crate core_graphics;
-use core_graphics::event::{CGEvent,CGEventRef,CGEventFlags,CGEventTapLocation,CGKeyCode};
+use core_graphics::event::{CGEvent,CGEventFlags,CGEventTapLocation,CGKeyCode};
 
 extern crate getopts;
 use getopts::Options;
@@ -30,8 +30,11 @@ fn main() {
         }
     };
 
-    activate_application(&target);
-    send_string_as_keystrokes(&format!("Hello, {}!", &target));
+    // Send A down, then A up
+    {
+        send_keyboard_event(0x00, true);
+        send_keyboard_event(0x00, false);
+    }
 }
 
 fn print_usage(program: &str, opts: Options) {
@@ -43,12 +46,5 @@ fn send_string_as_keystrokes(s: &str) {
     Command::new("osascript")
             .arg("-e")
             .arg(format!("tell application \"System Events\" to keystroke \"{}\"", s))
-            .output();
-}
-
-fn activate_application(name: &str) {
-    Command::new("osascript")
-            .arg("-e")
-            .arg(format!("activate application\"{}\"", name))
             .output();
 }
