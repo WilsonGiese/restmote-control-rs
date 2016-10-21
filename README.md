@@ -7,7 +7,7 @@ I wanted to create an application that could achieve something similar while bei
 application agnostic.
 
 ## Tasks
-- [ ] Send keyboard events to a specified application on OSX with CG Framework
+- [x] Send keyboard events to a specified application on OSX with CG Framework
 - [ ] Create REST services to invoke keyboard events
 - [ ] Configurable with simple JSON (or something else?) formatted file
 - [ ] Interface with Windows SendKeys API (Stretch)
