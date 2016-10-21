@@ -1,11 +1,14 @@
 extern crate core_graphics;
 use core_graphics::event::{CGEvent,CGEventFlags,CGEventTapLocation,CGKeyCode};
+use core_graphics::event_source::{CGEventSource,CGEventSourceStateID};
 
 extern crate getopts;
 use getopts::Options;
 
 use std::env;
 use std::process::Command;
+
+use std::{thread, time};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -30,10 +33,17 @@ fn main() {
         }
     };
 
-    // Send A down, then A up
-    {
-        send_keyboard_event(0x00, true);
-        send_keyboard_event(0x00, false);
+    // Send "Hello!""
+    for i in 0..2 {
+        send_keyboard_event(0x12, true);
+        send_keyboard_event(0x12, false);
+        // Sleep because if we don't the next event post seems to be missed, unless we post a lot
+        // events, then they don't get missed, or most of them don't get missed. This API is kind
+        // of buggy... Fun -_-
+        thread::sleep_ms(25);
+        send_keyboard_event_with_flags(0x12, CGEventFlags::Shift, true);
+        send_keyboard_event_with_flags(0x12, CGEventFlags::Shift, false);
+        thread::sleep_ms(25);
     }
 }
 
@@ -42,17 +52,19 @@ fn print_usage(program: &str, opts: Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn send_keyboard_event(keycode: CGKeyCode, keydown: bool) {
-    let event = CGEvent::new(keycode, keydown);
-    match event {
-        Ok(event) => event.post(CGEventTapLocation::HIDEventTap),
-        Err(_) => println!("Err")
-    }
+fn send_keyboard_event(keycode: CGKeyCode, keydown: bool) -> Result<(), ()> {
+    let eventSource = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
+    let event = try!(CGEvent::new(eventSource, keycode, keydown));
+    event.post_to_pid(1645);
+    
+    Ok(())
 }
 
-fn activate_application(name: &str) {
-    Command::new("osascript")
-            .arg("-e")
-            .arg(format!("activate application\"{}\"", name))
-            .output();
+fn send_keyboard_event_with_flags(keycode: CGKeyCode, flags: CGEventFlags, keydown: bool) -> Result<(), ()>  {
+    let eventSource = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
+    let event = try!(CGEvent::new(eventSource, keycode, keydown));
+    event.set_flags(flags);
+    event.post_to_pid(1645);
+
+    Ok(())
 }
