@@ -4,5 +4,6 @@ version = "0.1.0"
 authors = ["Wilson Giese <giese.wilson@gmail.com>"]
 
 [dependencies]
-getopts = "0.2.14"
 core-graphics = { git = "https://github.com/WilsonGiese/core-graphics-rs" }
+getopts = "0.2.14"
+libc = "0.2"
