@@ -27,11 +27,11 @@ dependencies = [
 [[package]]
 name = "core-graphics"
 version = "0.4.1"
-source = "git+https://github.com/WilsonGiese/core-graphics-rs#1d652dd5db9124aba79e4f6292c3b292ee5403d7"
+source = "git+https://github.com/WilsonGiese/core-graphics-rs#438e083fc31ce4b6b1ecf9cd4db2da694fbddd89"
 dependencies = [
  "core-foundation 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 0.8.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 0.8.16 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -46,7 +46,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "serde"
-version = "0.8.15"
+version = "0.8.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
@@ -55,4 +55,4 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum core-graphics 0.4.1 (git+https://github.com/WilsonGiese/core-graphics-rs)" = "<none>"
 "checksum getopts 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)" = "d9047cfbd08a437050b363d35ef160452c5fe8ea5187ae0a624708c91581d685"
 "checksum libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)" = "044d1360593a78f5c8e5e710beccdc24ab71d1f01bc19a29bcacdba22e8475d8"
-"checksum serde 0.8.15 (registry+https://github.com/rust-lang/crates.io-index)" = "8c5e31a1f71f9c45b863137bf80c2a0254ca9c61a5688a7ae273eec302bda7e5"
+"checksum serde 0.8.16 (registry+https://github.com/rust-lang/crates.io-index)" = "1105e65d0a0b212d2d735c8b5a4f6aba2adc501e8ad4497e9f1a39e4c4ac943e"
