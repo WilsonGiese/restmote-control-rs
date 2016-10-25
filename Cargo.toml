@@ -7,3 +7,4 @@ authors = ["Wilson Giese <giese.wilson@gmail.com>"]
 core-graphics = { git = "https://github.com/WilsonGiese/core-graphics-rs" }
 getopts = "0.2.14"
 libc = "0.2"
+rustful = "0.9"

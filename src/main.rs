@@ -8,7 +8,16 @@ use getopts::Options;
 extern crate libc;
 use libc::pid_t;
 
+#[macro_use]
+extern crate rustful;
+use rustful::{Server, Context, Response, TreeRouter};
+
+// #[macro_use]
+// extern crate log;
+// extern crate env_logger;
+
 use std::env;
+use std::error::Error;
 use std::fmt::Display;
 use std::process::Command;
 use std::thread;
@@ -63,15 +72,52 @@ fn print_usage(program: &str, opts: Options, error: Option<&Display>) {
     println!("{}", opts.usage(&format!("Usage: {} FILE [options]", program)));
 }
 
-/// Start of application
 fn run(pid: pid_t) {
-    press_key(pid, 0x04, Some(CGEventFlags::Shift)); // H
-    press_key(pid, 0x0E, None);                      // e
-    press_key(pid, 0x25, None);                      // l
-    press_key(pid, 0x25, None);                      // l
-    press_key(pid, 0x1F, None);                      // o
-    press_key(pid, 0x12, Some(CGEventFlags::Shift)); // !
-    press_key(pid, 0x34, None);                      // ENTER (\n)
+    //Build and run the server.
+    let server_result = Server {
+        //Turn a port number into an IPV4 host address (0.0.0.0:8080 in this case).
+        host: 8080.into(),
+
+        //Create a TreeRouter and fill it with handlers.
+        handlers: insert_routes!{
+            TreeRouter::new() => {
+                //Handle requests for root...
+                "press/:keycode" => Get: press
+            }
+        },
+
+        //Use default values for everything else.
+        ..Server::default()
+    }.run();
+
+    match server_result {
+        Ok(_server) => {},
+        Err(e) => println!("could not start server: {}", e.description())
+    }
+}
+
+/// Press a key with a specified keycode
+fn press(context: Context, response: Response) {
+    let keycode_str = match context.variables.get("keycode") {
+        Some(k) => k,
+        None => {
+            response.send(format!("Missing required keycode parameter!"));
+            return;
+        }
+    };
+
+    let keycode = match keycode_str.parse::<CGKeyCode>() {
+        Ok(k) => k,
+        Err(_) => {
+            response.send(format!("Invalid keycode: {}", keycode_str));
+            return;
+        }
+    };
+
+    match press_key(683, keycode, None) {
+        Ok(_) => (),
+        Err(_) => response.send(format!("Failed to press key: {}", keycode)),
+    }
 }
 
 /// Simulate a keyboard key press by sending a key-up then key-down event to an application
