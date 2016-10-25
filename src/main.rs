@@ -44,39 +44,28 @@ fn main() {
         }
     };
 
-    press_key_with_flags(pid, 0x04, CGEventFlags::Shift); // H
-    press_key(pid, 0x0E);                                 // e
-    press_key(pid, 0x25);                                 // l
-    press_key(pid, 0x25);                                 // l
-    press_key(pid, 0x1F);                                 // o
-    press_key_with_flags(pid, 0x12, CGEventFlags::Shift); // !
-    press_key(pid, 0x34);                                 // ENTER (\n)
+    press_key(pid, 0x04, Some(CGEventFlags::Shift)); // H
+    press_key(pid, 0x0E, None);                      // e
+    press_key(pid, 0x25, None);                      // l
+    press_key(pid, 0x25, None);                      // l
+    press_key(pid, 0x1F, None);                      // o
+    press_key(pid, 0x12, Some(CGEventFlags::Shift)); // !
+    press_key(pid, 0x34, None);                      // ENTER (\n)
 }
 
-fn press_key(pid: pid_t, keycode: CGKeyCode) -> Result<(), ()> {
-
-    try!(send_keyboard_event(pid, keycode, true));
-    send_keyboard_event(pid, keycode, false)
+fn press_key(pid: pid_t, keycode: CGKeyCode, flags: Option<CGEventFlags>) -> Result<(), ()> {
+    try!(post_keyboard_event(pid, keycode, flags, true));
+    post_keyboard_event(pid, keycode, flags, false)
 }
 
-fn press_key_with_flags(pid: pid_t, keycode: CGKeyCode, flags: CGEventFlags) -> Result<(), ()> {
-    try!(send_keyboard_event_with_flags(pid, keycode, flags, true));
-    send_keyboard_event_with_flags(pid, keycode, flags, false)
-}
-
-fn send_keyboard_event(pid: pid_t, keycode: CGKeyCode, keydown: bool) -> Result<(), ()> {
+fn post_keyboard_event(pid: pid_t, keycode: CGKeyCode, flags: Option<CGEventFlags>, keydown: bool) -> Result<(), ()> {
     let eventSource = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
     let event = try!(CGEvent::new(eventSource, keycode, keydown));
 
-    thread::sleep_ms(EVENT_POST_SLEEP_DURATION);
-    event.post_to_pid(pid);
-    Ok(())
-}
-
-fn send_keyboard_event_with_flags(pid: pid_t, keycode: CGKeyCode, flags: CGEventFlags, keydown: bool) -> Result<(), ()>  {
-    let eventSource = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
-    let event = try!(CGEvent::new(eventSource, keycode, keydown));
-    event.set_flags(flags);
+    match flags {
+        Some(f) => event.set_flags(f),
+        _ => (),
+    }
 
     thread::sleep_ms(EVENT_POST_SLEEP_DURATION);
     event.post_to_pid(pid);
