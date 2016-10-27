@@ -30,15 +30,18 @@ impl Handler for KeyboardPress {
         };
 
         let modifier = match context.query.get("modifier") {
-            Some(m) => match m.into_owned().as_str() {
-                "shift" => Some(CGEventFlags::Shift),
-                "control" => Some(CGEventFlags::Control),
-                "alternate" => Some(CGEventFlags::Alternate),
-                "command" => Some(CGEventFlags::Command),
-                _ => {
-                    response.set_status(StatusCode::BadRequest);
-                    response.send("Invalid modifier");
-                    return;
+            Some(m) => {
+                let m = m.into_owned();
+                match m.as_str() {
+                    "shift" => Some(CGEventFlags::Shift),
+                    "control" => Some(CGEventFlags::Control),
+                    "alternate" => Some(CGEventFlags::Alternate),
+                    "command" => Some(CGEventFlags::Command),
+                    _ => {
+                        response.set_status(StatusCode::BadRequest);
+                        response.send(format!("Invalid modifier: {}", m));
+                        return;
+                    }
                 }
             },
             None => None
