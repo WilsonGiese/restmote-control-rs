@@ -1,32 +1,21 @@
+mod keyboard;
+mod server;
+
 extern crate core_graphics;
-use core_graphics::event::{CGEvent,CGEventFlags,CGEventTapLocation,CGKeyCode};
-use core_graphics::event_source::{CGEventSource,CGEventSourceStateID};
-
 extern crate getopts;
-use getopts::Options;
-
 extern crate libc;
-use libc::pid_t;
-
 #[macro_use]
 extern crate rustful;
-use rustful::{Server, Context, Response, TreeRouter};
 
-// #[macro_use]
-// extern crate log;
-// extern crate env_logger;
+use getopts::Options;
+
+use libc::pid_t;
+
+use server::{KeyboardPress};
 
 use std::env;
-use std::error::Error;
 use std::fmt::Display;
 use std::process::Command;
-use std::thread;
-use std::time::Duration;
-
-/// Amount of time the thread will sleep before posting a keyboard event.
-/// This isn't required according to any documentation for the CGEvents API, but without this some
-/// events posted do not appear to make it to the target application (pid)
-const EVENT_POST_SLEEP_DURATION: u32 = 10;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -60,7 +49,7 @@ fn main() {
         }
     };
 
-    run(pid);
+    server::run(pid);
 }
 
 /// Print program usage
@@ -70,75 +59,4 @@ fn print_usage(program: &str, opts: Options, error: Option<&Display>) {
         None    => (),
     }
     println!("{}", opts.usage(&format!("Usage: {} FILE [options]", program)));
-}
-
-fn run(pid: pid_t) {
-    //Build and run the server.
-    let server_result = Server {
-        //Turn a port number into an IPV4 host address (0.0.0.0:8080 in this case).
-        host: 8080.into(),
-
-        //Create a TreeRouter and fill it with handlers.
-        handlers: insert_routes!{
-            TreeRouter::new() => {
-                //Handle requests for root...
-                "press/:keycode" => Get: press
-            }
-        },
-
-        //Use default values for everything else.
-        ..Server::default()
-    }.run();
-
-    match server_result {
-        Ok(_server) => {},
-        Err(e) => println!("could not start server: {}", e.description())
-    }
-}
-
-/// Press a key with a specified keycode
-fn press(context: Context, response: Response) {
-    let keycode_str = match context.variables.get("keycode") {
-        Some(k) => k,
-        None => {
-            response.send(format!("Missing required keycode parameter!"));
-            return;
-        }
-    };
-
-    let keycode = match keycode_str.parse::<CGKeyCode>() {
-        Ok(k) => k,
-        Err(_) => {
-            response.send(format!("Invalid keycode: {}", keycode_str));
-            return;
-        }
-    };
-
-    match press_key(683, keycode, None) {
-        Ok(_) => (),
-        Err(_) => response.send(format!("Failed to press key: {}", keycode)),
-    }
-}
-
-/// Simulate a keyboard key press by sending a key-up then key-down event to an application
-/// specified by the pid
-fn press_key(pid: pid_t, keycode: CGKeyCode, flags: Option<CGEventFlags>) -> Result<(), ()> {
-    try!(post_keyboard_event(pid, keycode, flags, true));
-    post_keyboard_event(pid, keycode, flags, false)
-}
-
-/// Post a single keyboard event with optional flags for keycode with the current keydown state.
-/// keydown = true for Key Pressed, keydown = false for Key Released
-fn post_keyboard_event(pid: pid_t, keycode: CGKeyCode, flags: Option<CGEventFlags>, keydown: bool) -> Result<(), ()> {
-    let eventSource = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
-    let event = try!(CGEvent::new(eventSource, keycode, keydown));
-
-    match flags {
-        Some(f) => event.set_flags(f),
-        _ => (),
-    }
-
-    thread::sleep_ms(EVENT_POST_SLEEP_DURATION);
-    event.post_to_pid(pid);
-    Ok(())
 }
