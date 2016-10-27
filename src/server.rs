@@ -31,8 +31,7 @@ impl Handler for KeyboardPress {
 
         let modifier = match context.query.get("modifier") {
             Some(m) => {
-                let m = m.into_owned();
-                match m.as_str() {
+                match &*m {
                     "shift" => Some(CGEventFlags::Shift),
                     "control" => Some(CGEventFlags::Control),
                     "alternate" => Some(CGEventFlags::Alternate),
