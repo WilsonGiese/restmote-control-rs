@@ -5,11 +5,19 @@ use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
 use std::error::Error;
 
-pub struct KeyboardPress {
+pub struct KeyboardPressHandler {
     pid: pid_t,
 }
 
-impl Handler for KeyboardPress {
+impl KeyboardPressHandler {
+    fn new(pid: pid_t) -> KeyboardPressHandler {
+        KeyboardPressHandler {
+            pid: pid
+        }
+    }
+}
+
+impl Handler for KeyboardPressHandler {
     fn handle_request(&self, context: Context, mut response: Response) {
         let keycode_str = match context.variables.get("keycode") {
             Some(k) => k,
@@ -56,7 +64,7 @@ impl Handler for KeyboardPress {
 pub fn run(pid: pid_t) {
     let router = insert_routes! {
         TreeRouter::new() => {
-            "press/:keycode" => Put: KeyboardPress { pid: pid }
+            "press/:keycode" => Put: KeyboardPressHandler::new(pid)
         }
     };
 

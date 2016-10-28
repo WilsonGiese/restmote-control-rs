@@ -11,8 +11,6 @@ use getopts::Options;
 
 use libc::pid_t;
 
-use server::{KeyboardPress};
-
 use std::env;
 use std::fmt::Display;
 use std::process::Command;
@@ -23,7 +21,7 @@ fn main() {
 
     // Setup program opts
     let mut opts = Options::new();
-    opts.optopt("p", "pid", "set target pid were keyboard events will be sent", "<PROCESS ID>");
+    opts.optopt("p", "pid", "set target pid where keyboard events will be sent", "<PROCESS ID>");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
