@@ -23,7 +23,7 @@ impl Handler for KeyboardPressHandler {
             Some(k) => k,
             None => {
                 response.set_status(StatusCode::BadRequest);
-                response.send(format!("Missing required keycode parameter!"));
+                response.send("Missing required keycode parameter");
                 return;
             }
         };
@@ -54,6 +54,7 @@ impl Handler for KeyboardPressHandler {
             None => None
         };
 
+        println!("Pressing key: {:X}", keycode);
         match keyboard::press_key(self.pid, keycode, modifier) {
             Ok(_) => (),
             Err(_) => response.send(format!("Failed to press key: {}", keycode)),

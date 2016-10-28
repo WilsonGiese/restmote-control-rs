@@ -13,7 +13,7 @@ use libc::pid_t;
 
 use std::env;
 use std::fmt::Display;
-use std::process::Command;
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -52,9 +52,8 @@ fn main() {
 
 /// Print program usage
 fn print_usage(program: &str, opts: Options, error: Option<&Display>) {
-    match error {
-        Some(e) => println!("Error: {}", e),
-        None    => (),
+    if let Some(e) = error {
+        println!("Error: {}", e)
     }
     println!("{}", opts.usage(&format!("Usage: {} FILE [options]", program)));
 }
