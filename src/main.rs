@@ -14,6 +14,7 @@ use libc::pid_t;
 use std::env;
 use std::fmt::Display;
 
+const DEFAULT_KEYPRESS_DELAY: usize = 10;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -22,6 +23,7 @@ fn main() {
     // Setup program opts
     let mut opts = Options::new();
     opts.optopt("p", "pid", "set target pid where keyboard events will be sent", "<PROCESS ID>");
+    opts.optopt("d", "delay", "set the delay between up & down key presses in ms", "<DELAY MS>");
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(e) => {
@@ -45,6 +47,20 @@ fn main() {
             print_usage(&program, opts, None);
             return;
         }
+    };
+
+    // Parse out -d --delay flag
+    let delay = match matches.opt_str("d") {
+        Some(d) => {
+            match d.parse::<usize>() {
+                Ok(d) => d,
+                Err(e) => {
+                    print_usage(&program, opts, Some(&e));
+                    return;
+                }
+            }
+        },
+        None => DEFAULT_KEYPRESS_DELAY,
     };
 
     server::run(pid);
