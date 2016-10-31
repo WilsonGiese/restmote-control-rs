@@ -14,7 +14,7 @@ use libc::pid_t;
 use std::env;
 use std::fmt::Display;
 
-const DEFAULT_KEYPRESS_DELAY: usize = 10;
+const DEFAULT_KEYPRESS_DELAY: u64 = 10;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -52,7 +52,7 @@ fn main() {
     // Parse out -d --delay flag
     let delay = match matches.opt_str("d") {
         Some(d) => {
-            match d.parse::<usize>() {
+            match d.parse::<u64>() {
                 Ok(d) => d,
                 Err(e) => {
                     print_usage(&program, opts, Some(&e));
@@ -63,7 +63,7 @@ fn main() {
         None => DEFAULT_KEYPRESS_DELAY,
     };
 
-    server::run(pid);
+    server::run(pid, delay);
 }
 
 /// Print program usage

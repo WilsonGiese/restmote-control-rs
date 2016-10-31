@@ -1,23 +1,11 @@
 use core_graphics::event::{CGEventFlags,CGKeyCode};
-use keyboard;
+use keyboard::VirtualKeyboard;
 use libc::pid_t;
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
 use std::error::Error;
 
-pub struct KeyboardPressHandler {
-    pid: pid_t,
-}
-
-impl KeyboardPressHandler {
-    fn new(pid: pid_t) -> KeyboardPressHandler {
-        KeyboardPressHandler {
-            pid: pid
-        }
-    }
-}
-
-impl Handler for KeyboardPressHandler {
+impl Handler for VirtualKeyboard {
     fn handle_request(&self, context: Context, mut response: Response) {
         let keycode_str = match context.variables.get("keycode") {
             Some(k) => k,
@@ -55,17 +43,17 @@ impl Handler for KeyboardPressHandler {
         };
 
         println!("Pressing key: {:X}", keycode);
-        match keyboard::press_key(self.pid, keycode, modifier) {
+        match self.press_key(keycode, modifier) {
             Ok(_) => (),
             Err(_) => response.send(format!("Failed to press key: {}", keycode)),
         }
     }
 }
 
-pub fn run(pid: pid_t) {
+pub fn run(pid: pid_t, delay_duration: u64) {
     let router = insert_routes! {
         TreeRouter::new() => {
-            "press/:keycode" => Put: KeyboardPressHandler::new(pid)
+            "press/:keycode" => Put: VirtualKeyboard::new(pid, delay_duration)
         }
     };
 
