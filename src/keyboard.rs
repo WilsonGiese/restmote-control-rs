@@ -7,6 +7,7 @@ use std::thread;
 use std::time::Duration;
 
 pub struct VirtualKeyboard {
+    /// Target application PID where keyboard events will be sent
     pid: pid_t,
 
     /// Amount of time the thread will sleep before posting a keyboard event.
