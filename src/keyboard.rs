@@ -53,6 +53,22 @@ impl VirtualKeyboard {
     }
 }
 
+static ASCII_KEYCODE_MAP: &'static [CGKeyCode] = &[0, 11, 8];
+
+/// Get CGCodeCode for coressponding ASCII code (QWERTY Keyboard)
+pub fn keycode_from_ascii(c: char) -> Option<CGKeyCode> {
+    let mut i = c as usize;
+
+    if i >= 97 {
+        i = i - 97;
+
+        if (i < ASCII_KEYCODE_MAP.len()) {
+            return Some(ASCII_KEYCODE_MAP[i]);
+        }
+    }
+    return None;
+}
+
 /// CGEventFlags from string. Case is ignored
 pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
     match &*s.to_lowercase() {
