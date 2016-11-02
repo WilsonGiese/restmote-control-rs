@@ -26,14 +26,35 @@ impl Handler for VirtualKeyboard {
         };
 
         let key = match json.find("key") {
-            Some(key) => key,
+            Some(key) => match key.as_string() {
+                Some(key) => {
+                    if key.len() == 1 {
+                        match keyboard::keycode_from_ascii(key.as_bytes()[0] as char) {
+                            Some(key) => key,
+                            None => {
+                                response.set_status(StatusCode::BadRequest);
+                                response.send(format!("Invalid key: {}", key));
+                                return;
+                            }
+                        }
+                    } else {
+                        response.set_status(StatusCode::BadRequest);
+                        response.send(format!("Invalid key: {}", key));
+                        return;
+                    }
+                },
+                None => {
+                    response.set_status(StatusCode::BadRequest);
+                    response.send("Unexpected type for field: key");
+                    return;
+                },
+            },
             None => {
                 response.set_status(StatusCode::BadRequest);
-                response.send(format!("Missing required field: key"));
+                response.send("Missing required field: key");
                 return;
             }
         };
-        println!("Key: {}", key);
 
         let modifier = match json.find("modifier") {
             Some(modifier) => match modifier.as_string() {
@@ -42,12 +63,11 @@ impl Handler for VirtualKeyboard {
             },
             None => None,
         };
-        println!("Modifier: {:?}", modifier);
 
-        // if let Err(_) = self.press_key(keycode, modifier) {
-        //     response.set_status(StatusCode::InternalServerError);
-        //     response.send(format!("Failed to press key: {}", keycode));
-        // }
+        if let Err(_) = self.press_key(key, modifier) {
+            response.set_status(StatusCode::InternalServerError);
+            response.send(format!("Failed to press key: {}", key));
+        }
     }
 }
 
