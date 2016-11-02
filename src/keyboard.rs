@@ -5,6 +5,7 @@ use libc::pid_t;
 
 use std::thread;
 use std::time::Duration;
+use std::str::FromStr;
 
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
@@ -49,5 +50,18 @@ impl VirtualKeyboard {
         thread::sleep(self.delay_duration);
         event.post_to_pid(self.pid);
         Ok(())
+    }
+}
+
+/// CGEventFlags from string. Case is ignored
+pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
+    match &*s.to_lowercase() {
+        "shift" => Some(CGEventFlags::Shift),
+        "control" => Some(CGEventFlags::Control),
+        "command" => Some(CGEventFlags::Command),
+        "option" => Some(CGEventFlags::Alternate),
+        "alternate" => Some(CGEventFlags::Alternate),
+        "alt" => Some(CGEventFlags::Alternate),
+        _ => None,
     }
 }

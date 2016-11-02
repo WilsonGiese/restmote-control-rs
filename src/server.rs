@@ -1,4 +1,5 @@
 use core_graphics::event::{CGEventFlags,CGKeyCode};
+use keyboard;
 use keyboard::VirtualKeyboard;
 use libc::pid_t;
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
@@ -6,54 +7,54 @@ use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 use std::error::Error;
 
 impl Handler for VirtualKeyboard {
-    fn handle_request(&self, context: Context, mut response: Response) {
-        let keycode_str = match context.variables.get("keycode") {
-            Some(k) => k,
+
+    /// Handle VirtualKeyboard POST Request
+    ///
+    /// Request Body Example:
+    ///     {
+    ///         key: "a"             (Required)
+    ///         modifier: "SHIFT"    (Optional)
+    ///     }
+    fn handle_request(&self, mut context: Context, mut response: Response) {
+        let json = match context.body.read_json_body() {
+            Ok(json) => json,
+            Err(e) => {
+                response.set_status(StatusCode::BadRequest);
+                response.send(format!("Invalid request body: {}", e));
+                return;
+            }
+        };
+
+        let key = match json.find("key") {
+            Some(key) => key,
             None => {
                 response.set_status(StatusCode::BadRequest);
-                response.send("Missing required keycode parameter");
+                response.send(format!("Missing required field: key"));
                 return;
             }
         };
+        println!("Key: {}", key);
 
-        let keycode = match keycode_str.parse::<CGKeyCode>() {
-            Ok(k) => k,
-            Err(_) => {
-                response.set_status(StatusCode::BadRequest);
-                response.send(format!("Invalid keycode: {}", keycode_str));
-                return;
-            }
-        };
-
-        let modifier = match context.query.get("modifier") {
-            Some(m) => {
-                match &*m {
-                    "shift" => Some(CGEventFlags::Shift),
-                    "control" => Some(CGEventFlags::Control),
-                    "alternate" => Some(CGEventFlags::Alternate),
-                    "command" => Some(CGEventFlags::Command),
-                    _ => {
-                        response.set_status(StatusCode::BadRequest);
-                        response.send(format!("Invalid modifier: {}", m));
-                        return;
-                    }
-                }
+        let modifier = match json.find("modifier") {
+            Some(modifier) => match modifier.as_string() {
+                Some(modifier) => keyboard::event_flags_from_str(modifier),
+                None => None,
             },
-            None => None
+            None => None,
         };
+        println!("Modifier: {:?}", modifier);
 
-        println!("Pressing key: {:X}", keycode);
-        match self.press_key(keycode, modifier) {
-            Ok(_) => (),
-            Err(_) => response.send(format!("Failed to press key: {}", keycode)),
-        }
+        // if let Err(_) = self.press_key(keycode, modifier) {
+        //     response.set_status(StatusCode::InternalServerError);
+        //     response.send(format!("Failed to press key: {}", keycode));
+        // }
     }
 }
 
 pub fn run(pid: pid_t, delay_duration: u64) {
     let router = insert_routes! {
         TreeRouter::new() => {
-            "press/:keycode" => Put: VirtualKeyboard::new(pid, delay_duration)
+            "press" => Post: VirtualKeyboard::new(pid, delay_duration)
         }
     };
 
