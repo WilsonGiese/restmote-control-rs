@@ -1,4 +1,3 @@
-use core_graphics::event::{CGEventFlags,CGKeyCode};
 use keyboard;
 use keyboard::VirtualKeyboard;
 use libc::pid_t;
@@ -28,19 +27,13 @@ impl Handler for VirtualKeyboard {
         let key = match json.find("key") {
             Some(key) => match key.as_string() {
                 Some(key) => {
-                    if key.len() == 1 {
-                        match keyboard::keycode_from_ascii(key.as_bytes()[0] as char) {
-                            Some(key) => key,
-                            None => {
-                                response.set_status(StatusCode::BadRequest);
-                                response.send(format!("Invalid key: {}", key));
-                                return;
-                            }
+                    match keyboard::keycode_from_str(key) {
+                        Some(key) => key,
+                        None => {
+                            response.set_status(StatusCode::BadRequest);
+                            response.send(format!("Invalid key: {}", key));
+                            return;
                         }
-                    } else {
-                        response.set_status(StatusCode::BadRequest);
-                        response.send(format!("Invalid key: {}", key));
-                        return;
                     }
                 },
                 None => {

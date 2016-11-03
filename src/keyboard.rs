@@ -5,7 +5,6 @@ use libc::pid_t;
 
 use std::thread;
 use std::time::Duration;
-use std::str::FromStr;
 
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
@@ -53,47 +52,105 @@ impl VirtualKeyboard {
     }
 }
 
-/// CGEventFlags from string. Case is ignored
+/// `CGEventFlags` from string. Case is ignored
 pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
     match &*s.to_lowercase() {
         "shift" => Some(CGEventFlags::Shift),
         "control" => Some(CGEventFlags::Control),
         "command" => Some(CGEventFlags::Command),
-        "option" => Some(CGEventFlags::Alternate),
-        "alternate" => Some(CGEventFlags::Alternate),
-        "alt" => Some(CGEventFlags::Alternate),
+        "option" | "alternate" | "alt" => Some(CGEventFlags::Alternate),
         _ => None,
     }
 }
 
-/// ASCII to CGKeyCodes
+pub fn keycode_from_char(c: char) -> Option<CGKeyCode> {
+    let i = c as usize;
 
-/// Get CGCodeCode for coressponding ASCII code (QWERTY Keyboard)
-pub fn keycode_from_ascii(c: char) -> Option<CGKeyCode> {
-    let mut i = c as usize;
-
-    match i {
+    let mut keycode = match i {
         // Letters
         i if i >= 97 && i <= 122 => Some(ASCII_KEYCODE_MAP_LETTERS[i - 97]),
         // Numbers
         i if i >= 48 && i <= 57 => Some(ASCII_KEYCODE_MAP_NUMBERS[i - 48]),
         _ => None,
+    };
+
+    if keycode == None {
+        keycode = match c {
+            ' ' => Some(0x31),
+            '=' => Some(0x18),
+            '-' => Some(0x1B),
+            ']' => Some(0x1E),
+            '[' => Some(0x21),
+            '/' => Some(0x2C),
+            ';' => Some(0x29),
+            ',' => Some(0x2B),
+            '.' => Some(0x2F),
+            '`' => Some(0x32),
+            '"' => Some(0x27),
+            '\\' => Some(0x2A),
+            _ => None,
+        };
     }
+
+    keycode
+}
+
+pub fn keycode_from_str(s: &str) -> Option<CGKeyCode> {
+    let mut keycode = None;
+    let s = s.to_lowercase();
+
+    // Characters
+    if s.len() == 1 {
+        keycode = keycode_from_char(s.as_bytes()[0] as char);
+    }
+
+    // Command Keys
+    if keycode == None {
+        keycode = match &*s {
+            // Command keys
+            "return" => Some(0x24),
+            "tab" => Some(0x30),
+            "space" => Some(0x31),
+            "delete" => Some(0x33),
+            "escape" => Some(0x35),
+            "capslock" => Some(0x39),
+            "volumeup" => Some(0x48),
+            "volumedown" => Some(0x49),
+            "mute" => Some(0x4A),
+            "help" => Some(0x72),
+            "home" => Some(0x73),
+            "pageup" => Some(0x74),
+            "forwarddelete" => Some(0x75),
+            "end" => Some(0x77),
+            "pagedown" => Some(0x79),
+            "leftarrow" => Some(0x7B),
+            "rightarrow" => Some(0x7C),
+            "downarrow" => Some(0x7D),
+            "uparrow" => Some(0x7E),
+            _ => None
+        };
+    }
+
+    keycode
 }
 
 #[test]
-fn keycode_from_ascii_test() {
-    assert_eq!(keycode_from_ascii('a').unwrap(), 0x00);
-    assert_eq!(keycode_from_ascii('b').unwrap(), 0x0B);
-    assert_eq!(keycode_from_ascii('p').unwrap(), 0x23);
-    assert_eq!(keycode_from_ascii('z').unwrap(), 0x06);
-    assert_eq!(keycode_from_ascii('0').unwrap(), 0x1D);
-    assert_eq!(keycode_from_ascii('5').unwrap(), 0x17);
-    assert_eq!(keycode_from_ascii('9').unwrap(), 0x19);
-    assert!(keycode_from_ascii('.').is_none());
-    assert!(keycode_from_ascii(';').is_none());
-    assert!(keycode_from_ascii('!').is_none());
-    assert!(keycode_from_ascii('~').is_none());
+fn keycode_from_str_test() {
+    assert_eq!(keycode_from_str("a").unwrap(), 0x00);
+    assert_eq!(keycode_from_str("b").unwrap(), 0x0B);
+    assert_eq!(keycode_from_str("p").unwrap(), 0x23);
+    assert_eq!(keycode_from_str("z").unwrap(), 0x06);
+    assert_eq!(keycode_from_str("0").unwrap(), 0x1D);
+    assert_eq!(keycode_from_str("5").unwrap(), 0x17);
+    assert_eq!(keycode_from_str("9").unwrap(), 0x19);
+    assert_eq!(keycode_from_str(";").unwrap(), 0x29);
+    assert_eq!(keycode_from_str("return").unwrap(), 0x24);
+    assert_eq!(keycode_from_str("escape").unwrap(), 0x35);
+    assert_eq!(keycode_from_str("downarrow").unwrap(), 0x7D);
+    assert_eq!(keycode_from_str("uparrow").unwrap(), 0x7E);
+    assert!(keycode_from_str("!").is_none());
+    assert!(keycode_from_str("foobar").is_none());
+    assert!(keycode_from_str("").is_none());
 }
 
 static ASCII_KEYCODE_MAP_LETTERS: &'static [CGKeyCode] =
