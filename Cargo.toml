@@ -5,6 +5,6 @@ authors = ["Wilson Giese <giese.wilson@gmail.com>"]
 
 [dependencies]
 core-graphics = { git = "https://github.com/WilsonGiese/core-graphics-rs" }
-getopts = "0.2.14"
+clap = "2.18.0"
 libc = "0.2"
 rustful = "0.9"
