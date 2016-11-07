@@ -53,7 +53,7 @@ fn main() {
     let delay = match app.value_of("delay").unwrap_or(DEFAULT_KEYPRESS_DELAY).parse::<u64>() {
         Ok(delay) => delay,
         Err(e) => {
-            error("Invalid pid", &e);
+            error("Invalid delay", &e);
             return;
         },
     };
