@@ -6,6 +6,8 @@ use libc::pid_t;
 use std::thread;
 use std::time::Duration;
 
+pub type KeyCode = CGKeyCode;
+
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
     pid: pid_t,
@@ -52,7 +54,7 @@ impl VirtualKeyboard {
     }
 }
 
-/// `CGEventFlags` from string. Case is ignored
+/// `CGEventFlags from string. Case is ignored
 pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
     match &*s.to_lowercase() {
         "shift" => Some(CGEventFlags::Shift),
