@@ -6,8 +6,6 @@ use libc::pid_t;
 use std::thread;
 use std::time::Duration;
 
-pub type KeyCode = CGKeyCode;
-
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
     pid: pid_t,

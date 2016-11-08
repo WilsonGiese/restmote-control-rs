@@ -1,5 +1,5 @@
 use keyboard;
-use keyboard::{KeyCode, VirtualKeyboard};
+use keyboard::VirtualKeyboard;
 use libc::pid_t;
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
@@ -7,12 +7,12 @@ use std::collections::HashSet;
 use std::error::Error;
 
 pub struct KeyboardHandler {
-    allowed_keys: HashSet<KeyCode>,
+    allowed_keys: HashSet<String>,
     keyboard: VirtualKeyboard,
 }
 
 impl KeyboardHandler {
-    fn new(allowed_keys: HashSet<KeyCode>, keyboard: VirtualKeyboard) -> KeyboardHandler {
+    fn new(allowed_keys: HashSet<String>, keyboard: VirtualKeyboard) -> KeyboardHandler {
         KeyboardHandler {
             allowed_keys: allowed_keys,
             keyboard: keyboard,
@@ -40,16 +40,7 @@ impl Handler for KeyboardHandler {
 
         let key = match json.find("key") {
             Some(key) => match key.as_string() {
-                Some(key) => {
-                    match keyboard::keycode_from_str(key) {
-                        Some(key) => key,
-                        None => {
-                            response.set_status(StatusCode::BadRequest);
-                            response.send(format!("Invalid key: {}", key));
-                            return;
-                        }
-                    }
-                },
+                Some(key) => key,
                 None => {
                     response.set_status(StatusCode::BadRequest);
                     response.send("Unexpected type for field: key");
@@ -63,6 +54,21 @@ impl Handler for KeyboardHandler {
             }
         };
 
+        if !self.allowed_keys.contains(key) {
+            response.set_status(StatusCode::BadRequest);
+            response.send(format!("Key not available: {}", key));
+            return;
+        }
+
+        let keycode = match keyboard::keycode_from_str(key) {
+            Some(keycode) => keycode,
+            None => {
+                response.set_status(StatusCode::BadRequest);
+                response.send(format!("Invalid key: {}", key));
+                return;
+            }
+        };
+
         let modifier = match json.find("modifier") {
             Some(modifier) => match modifier.as_string() {
                 Some(modifier) => keyboard::event_flags_from_str(modifier),
@@ -71,14 +77,9 @@ impl Handler for KeyboardHandler {
             None => None,
         };
 
-        if self.allowed_keys.contains(&key) {
-            if let Err(_) = self.keyboard.press_key(key, modifier) {
-                response.set_status(StatusCode::InternalServerError);
-                response.send(format!("Failed to press key: {}", key));
-            }
-        } else {
-            response.set_status(StatusCode::BadRequest);
-            response.send(format!("Key {} not available", key)) ;
+        if let Err(_) = self.keyboard.press_key(keycode, modifier) {
+            response.set_status(StatusCode::InternalServerError);
+            response.send(format!("Failed to press key: {}", key));
         }
     }
 }
@@ -145,9 +146,7 @@ impl Handler for KeyboardHandler {
 pub fn run(pid: pid_t, delay_duration: u64) {
     let keyboard = VirtualKeyboard::new(pid, delay_duration);
     let mut allowed_keys = HashSet::new();
-    allowed_keys.insert(0);
-    allowed_keys.insert(1);
-    allowed_keys.insert(2);
+    allowed_keys.insert(String::from("a"));
 
     let router = insert_routes! {
         TreeRouter::new() => {
