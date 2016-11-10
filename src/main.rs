@@ -1,9 +1,11 @@
+mod error;
 mod keyboard;
 mod server;
 
 extern crate clap;
 extern crate core_graphics;
 extern crate libc;
+extern crate rustc_serialize;
 #[macro_use]
 extern crate rustful;
 
@@ -21,44 +23,22 @@ fn main() {
         .version("0.1")
         .author("Wilson Giese <giese.wilson@gmail.com>")
         .about("Control an application with a REST service")
-        .arg(Arg::with_name("pid")
-            .short("p")
-            .long("pid")
-            .value_name("PID")
+        .arg(Arg::with_name("config")
+            .short("c")
+            .long("config")
+            .value_name("CONFIG-FILE PATH")
             .required(true)
             .takes_value(true)
-            .help("Target application PID where events will be sent"))
-        .arg(Arg::with_name("d")
-            .short("d")
-            .long("delay")
-            .value_name("MS")
-            .required(false)
-            .takes_value(true)
-            .help("Delay between key up & down events in milliseconds"))
+            .help("Application configuration file"))
         .get_matches();
 
-    let pid = match app.value_of("pid") {
-        Some(pid) => {
-            match pid.parse::<pid_t>() {
-                Ok(pid) => pid,
-                Err(e) => {
-                    error("Invalid pid", &e);
-                    return;
-                },
-            }
-        }
-        None => 0,
-    };
+    let config = app.value_of("config").unwrap();
 
-    let delay = match app.value_of("delay").unwrap_or(DEFAULT_KEYPRESS_DELAY).parse::<u64>() {
-        Ok(delay) => delay,
-        Err(e) => {
-            error("Invalid delay", &e);
-            return;
-        },
-    };
+    println!("{}", config);
 
-    server::run(pid, delay)
+    if let Err(e) = server::run(config) {
+        println!("Failure: {}", e);
+    }
 }
 
 // Print a message and error then exit with status 1

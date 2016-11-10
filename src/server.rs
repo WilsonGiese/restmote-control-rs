@@ -1,10 +1,24 @@
+use error::RcError;
+
 use keyboard;
 use keyboard::VirtualKeyboard;
+
 use libc::pid_t;
+
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
-use std::collections::HashSet;
 use std::error::Error;
+
+
+use std::collections::HashSet;
+use std::io::Read;
+use std::fs::File;
+
+use rustc_serialize::json;
+use rustc_serialize::json::Json;
+
+
+
 
 pub struct KeyboardHandler {
     allowed_keys: HashSet<String>,
@@ -18,9 +32,35 @@ impl KeyboardHandler {
             keyboard: keyboard,
         }
     }
+
+    fn keyboard_handler_from_config(path: &str) -> Result<KeyboardHandler, RcError> {
+        let mut config = try!(File::open(path));
+        let mut json_str = String::new();
+        try!(config.read_to_string(&mut json_str));
+
+        let json = try!(Json::from_str(&json_str));
+
+        let mut allowed_keys = HashSet::new();
+
+        match json.as_array() {
+            Some(array) => {
+                for key in array {
+                    if let Some(key) = key.as_string() {
+                        allowed_keys.insert(key.to_string());
+                    } else {
+                        return Err(RcError::Config(String::from("Expected key as string")))
+                    }
+                }
+            },
+            None => return Err(RcError::Config(String::from("Expected keys as Array")))
+        };
+
+        Ok(KeyboardHandler::new(allowed_keys, VirtualKeyboard::new(0, 0)))
+    }
 }
 
 impl Handler for KeyboardHandler {
+
     /// Handle VirtualKeyboard POST Request
     ///
     /// Request Body Example:
@@ -84,26 +124,22 @@ impl Handler for KeyboardHandler {
     }
 }
 
-pub fn run(pid: pid_t, delay_duration: u64) {
-    let keyboard = VirtualKeyboard::new(pid, delay_duration);
-    let mut allowed_keys = HashSet::new();
-    allowed_keys.insert(String::from("a"));
+
+pub fn run(config: &str) -> Result<(), RcError> {
+    let handler = try!(KeyboardHandler::keyboard_handler_from_config(config));
 
     let router = insert_routes! {
         TreeRouter::new() => {
-            "press" => Post: KeyboardHandler::new(allowed_keys, keyboard)
+            "press" => Post: handler
         }
     };
 
     //Build and run the server.
-    let server_result = Server {
+    Server {
         host: 8080.into(),
         handlers: router,
         ..Server::default()
     }.run();
 
-    match server_result {
-        Ok(_server) => {},
-        Err(e) => println!("could not start server: {}", e.description())
-    }
+    Ok(())
 }

@@ -8,3 +8,4 @@ core-graphics = { git = "https://github.com/WilsonGiese/core-graphics-rs" }
 clap = "2.18.0"
 libc = "0.2"
 rustful = "0.9"
+rustc-serialize = "0.3"
