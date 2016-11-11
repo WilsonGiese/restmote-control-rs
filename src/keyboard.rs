@@ -52,16 +52,21 @@ impl VirtualKeyboard {
     }
 }
 
-/// `CGEventFlags from string. Case is ignored
-pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
-    match &*s.to_lowercase() {
-        "shift" => Some(CGEventFlags::Shift),
-        "control" => Some(CGEventFlags::Control),
-        "command" => Some(CGEventFlags::Command),
-        "option" | "alternate" | "alt" => Some(CGEventFlags::Alternate),
-        _ => None,
-    }
-}
+/// Map of ascii characters to their respective CG Keycodes
+static ASCII_KEYCODE_MAP_LETTERS: &'static [CGKeyCode] =
+    &[
+        // a    b    c    d    e    f    g    h    i    j    k    l    m
+        0x00,0x0B,0x08,0x02,0x0E,0x03,0x05,0x04,0x22,0x26,0x28,0x25,0x2E,
+        // n    o    p    q    r    s    t    u    v    w    x    y    z
+        0x2D,0x1F,0x23,0x0C,0x0F,0x01,0x11,0x20,0x09,0x0D,0x07,0x10,0x06
+    ];
+
+/// Map of ascii digits to their respective CG Keycodes
+static ASCII_KEYCODE_MAP_NUMBERS: &'static [CGKeyCode] =
+    &[
+        // 0    1    2    3    4    5    6    7    8    9
+        0x1D,0x12,0x13,0x14,0x15,0x17,0x16,0x1A,0x1C,0x19
+    ];
 
 pub fn keycode_from_char(c: char) -> Option<CGKeyCode> {
     let i = c as usize;
@@ -134,6 +139,17 @@ pub fn keycode_from_str(s: &str) -> Option<CGKeyCode> {
     keycode
 }
 
+/// `CGEventFlags from string. Case is ignored
+pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
+    match &*s.to_lowercase() {
+        "shift" => Some(CGEventFlags::Shift),
+        "control" => Some(CGEventFlags::Control),
+        "command" => Some(CGEventFlags::Command),
+        "option" | "alternate" | "alt" => Some(CGEventFlags::Alternate),
+        _ => None,
+    }
+}
+
 #[test]
 fn keycode_from_str_test() {
     assert_eq!(keycode_from_str("a").unwrap(), 0x00);
@@ -152,47 +168,3 @@ fn keycode_from_str_test() {
     assert!(keycode_from_str("foobar").is_none());
     assert!(keycode_from_str("").is_none());
 }
-
-static ASCII_KEYCODE_MAP_LETTERS: &'static [CGKeyCode] =
-    &[
-        0x00, // a
-        0x0B, // b
-        0x08, // c
-        0x02, // d
-        0x0E, // e
-        0x03, // f
-        0x05, // g
-        0x04, // h
-        0x22, // i
-        0x26, // j
-        0x28, // k
-        0x25, // l
-        0x2E, // m
-        0x2D, // n
-        0x1F, // o
-        0x23, // p
-        0x0C, // q
-        0x0F, // r
-        0x01, // s
-        0x11, // t
-        0x20, // u
-        0x09, // v
-        0x0D, // w
-        0x07, // x
-        0x10, // y
-        0x06, // z
-    ];
-
-static ASCII_KEYCODE_MAP_NUMBERS: &'static [CGKeyCode] =
-    &[
-        0x1D, // 0
-        0x12, // 1
-        0x13, // 2
-        0x14, // 3
-        0x15, // 4
-        0x17, // 5
-        0x16, // 6
-        0x1A, // 7
-        0x1C, // 8
-        0x19, // 9
-    ];

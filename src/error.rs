@@ -37,7 +37,7 @@ impl fmt::Display for RcError {
             RcError::Parser(ref e) => write!(f, "{}", e),
             RcError::Io(ref e) => write!(f, "{}", e),
             RcError::Config(ref e) => write!(f, "{}", e),
-            RcError::Server(ref e) => write!(f, "{}", e), 
+            RcError::Server(ref e) => write!(f, "{}", e),
         }
     }
 }
