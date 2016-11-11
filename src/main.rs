@@ -11,8 +11,6 @@ extern crate rustful;
 
 use clap::{Arg, App, AppSettings};
 
-use libc::pid_t;
-
 use std::fmt::Display;
 
 const DEFAULT_KEYPRESS_DELAY: &'static str = "10";

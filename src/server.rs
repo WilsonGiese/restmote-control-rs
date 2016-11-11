@@ -3,22 +3,13 @@ use error::RcError;
 use keyboard;
 use keyboard::VirtualKeyboard;
 
-use libc::pid_t;
-
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
-
-use std::error::Error;
-
 
 use std::collections::HashSet;
 use std::io::Read;
 use std::fs::File;
 
-use rustc_serialize::json;
 use rustc_serialize::json::Json;
-
-
-
 
 pub struct KeyboardHandler {
     allowed_keys: HashSet<String>,
@@ -117,7 +108,7 @@ impl Handler for KeyboardHandler {
             None => None,
         };
 
-        if let Err(_) = self.keyboard.press_key(keycode, modifier) {
+        if self.keyboard.press_key(keycode, modifier).is_err() {
             response.set_status(StatusCode::InternalServerError);
             response.send(format!("Failed to press key: {}", key));
         }
@@ -135,11 +126,15 @@ pub fn run(config: &str) -> Result<(), RcError> {
     };
 
     //Build and run the server.
-    Server {
+    let server = Server {
         host: 8080.into(),
         handlers: router,
         ..Server::default()
-    }.run();
+    };
 
-    Ok(())
+    if let Err(e) = server.run() {
+        Err(RcError::Server(e))
+    } else {
+        Ok(())
+    }
 }
