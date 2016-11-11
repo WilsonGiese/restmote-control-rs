@@ -132,7 +132,7 @@ impl Handler for KeyboardHandler {
         }
 
         let modifier = match json.find("modifier") {
-            Some(modifier) => match modifier.as_string() {
+            Some(modifier_str) => match modifier_str.as_string() {
                 Some(modifier) => keyboard::modifier_from_str(modifier),
                 None => None,
             },
@@ -140,15 +140,15 @@ impl Handler for KeyboardHandler {
         };
 
         // Check if the modifier is allowed
-        // if let Some(m) = modifier {
-        //     if let Some(modifiers) = self.allowed_modifiers.get(&keycode) {
-        //         if !modifiers.contains(modifier) {
-        //             response.set_status(StatusCode::BadRequest);
-        //             response.send(format!("Key not available: {}", key));
-        //             return;
-        //         }
-        //     }
-        // }
+        if let Some(m) = modifier {
+            if let Some(modifiers) = self.allowed_modifiers.get(&keycode) {
+                if !modifiers.contains(&m) {
+                    response.set_status(StatusCode::BadRequest);
+                    response.send(format!("Modifier not supported: {:?}", m));
+                    return;
+                }
+            }
+        }
 
         if self.keyboard.press_key(keycode, modifier).is_err() {
             response.set_status(StatusCode::InternalServerError);

@@ -1,3 +1,8 @@
+///! Abstraction over the `CGEvents` lib to route virtual keyboard presses to an application using
+///! its pid
+///!
+///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
+
 use core_graphics::event::{CGEvent,CGEventFlags,CGKeyCode};
 use core_graphics::event_source::{CGEventSource,CGEventSourceStateID};
 
@@ -16,7 +21,8 @@ pub struct VirtualKeyboard {
     /// Amount of time the thread will sleep before posting a keyboard event.
     /// This isn't required according to any documentation for the `CGEvents` API, but without this
     /// some events posted do not appear to make it to the target application (pid). Tuning seems
-    /// required for individual applications
+    /// required for individual applications; most times short durations like 10ms work, but other
+    /// applications can take upwards of 50ms before events are reliably delivered
     delay_duration: Duration,
 }
 
