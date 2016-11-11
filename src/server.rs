@@ -51,7 +51,12 @@ impl KeyboardHandler {
 
         let mut allowed_keys = HashSet::new();
         for key in config.keys {
-            allowed_keys.insert(key.key);
+            if let None = keyboard::keycode_from_str(key.key.as_str()) {
+                return Err(RcError::Config(format!("Unsupported key in {}: {}", path, key.key)));
+            } else {
+                allowed_keys.insert(key.key);
+            }
+
         }
 
         Ok(KeyboardHandler::new(allowed_keys,
