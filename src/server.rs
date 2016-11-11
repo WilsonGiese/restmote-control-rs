@@ -1,25 +1,24 @@
 use error::RcError;
 
 use keyboard;
-use keyboard::VirtualKeyboard;
+use keyboard::{Keycode,Modifier,VirtualKeyboard};
 
 use libc;
 
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
-use std::collections::HashSet;
+use std::collections::{HashSet,HashMap};
 use std::io::Read;
 use std::fs::File;
 
 use rustc_serialize::json;
 
 pub struct KeyboardHandler {
-    allowed_keys: HashSet<String>,
+    allowed_keys: HashSet<Keycode>,
+    allowed_modifiers: HashMap<Keycode, Vec<Modifier>>,
     keyboard: VirtualKeyboard,
 }
 
-// Automatically generate `RustcDecodable` and `RustcEncodable` trait
-// implementations
 #[derive(RustcDecodable, RustcEncodable)]
 struct Config  {
     pid: libc::pid_t,
@@ -34,9 +33,14 @@ struct Key {
 }
 
 impl KeyboardHandler {
-    fn new(allowed_keys: HashSet<String>, keyboard: VirtualKeyboard) -> KeyboardHandler {
+    fn new(
+        allowed_keys: HashSet<Keycode>,
+        allowed_modifiers: HashMap<Keycode, Vec<Modifier>>,
+        keyboard: VirtualKeyboard
+    ) -> KeyboardHandler {
         KeyboardHandler {
             allowed_keys: allowed_keys,
+            allowed_modifiers: allowed_modifiers,
             keyboard: keyboard,
         }
     }
@@ -50,16 +54,28 @@ impl KeyboardHandler {
         let config: Config = try!(json::decode(json_str.as_str()));
 
         let mut allowed_keys = HashSet::new();
+        let mut allowed_modifiers = HashMap::new();
         for key in config.keys {
-            if let None = keyboard::keycode_from_str(key.key.as_str()) {
-                return Err(RcError::Config(format!("Unsupported key in {}: {}", path, key.key)));
-            } else {
-                allowed_keys.insert(key.key);
-            }
+            // Add key to allowed_keys if it is a valid keycode
+            if let Some(k) = keyboard::keycode_from_str(key.key.as_str()) {
+                allowed_keys.insert(k);
 
+                // Add modifiers to key map if they are valid modifiers
+                let mut modifiers = Vec::with_capacity(key.allowed_modifiers.len());
+                for modifier in key.allowed_modifiers {
+                    if let Some(m) = keyboard::modifier_from_str(modifier.as_str()) {
+                        modifiers.push(m);
+                    } else {
+                        return Err(RcError::Config(format!("Unsupported modifier in {}: {}", path, modifier)));
+                    }
+                }
+                allowed_modifiers.insert(k, modifiers);
+            } else {
+                return Err(RcError::Config(format!("Unsupported key in {}: {}", path, key.key)));
+            }
         }
 
-        Ok(KeyboardHandler::new(allowed_keys,
+        Ok(KeyboardHandler::new(allowed_keys, allowed_modifiers,
             VirtualKeyboard::new(config.pid, config.keypress_delay)))
     }
 }
@@ -99,12 +115,6 @@ impl Handler for KeyboardHandler {
             }
         };
 
-        if !self.allowed_keys.contains(key) {
-            response.set_status(StatusCode::BadRequest);
-            response.send(format!("Key not available: {}", key));
-            return;
-        }
-
         let keycode = match keyboard::keycode_from_str(key) {
             Some(keycode) => keycode,
             None => {
@@ -114,13 +124,31 @@ impl Handler for KeyboardHandler {
             }
         };
 
+        // Check if the key is allowed
+        if !self.allowed_keys.contains(&keycode) {
+            response.set_status(StatusCode::BadRequest);
+            response.send(format!("Key not supported: {}", key));
+            return;
+        }
+
         let modifier = match json.find("modifier") {
             Some(modifier) => match modifier.as_string() {
-                Some(modifier) => keyboard::event_flags_from_str(modifier),
+                Some(modifier) => keyboard::modifier_from_str(modifier),
                 None => None,
             },
             None => None,
         };
+
+        // Check if the modifier is allowed
+        // if let Some(m) = modifier {
+        //     if let Some(modifiers) = self.allowed_modifiers.get(&keycode) {
+        //         if !modifiers.contains(modifier) {
+        //             response.set_status(StatusCode::BadRequest);
+        //             response.send(format!("Key not available: {}", key));
+        //             return;
+        //         }
+        //     }
+        // }
 
         if self.keyboard.press_key(keycode, modifier).is_err() {
             response.set_status(StatusCode::InternalServerError);

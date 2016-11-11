@@ -4,11 +4,11 @@
   "keys": [
     {
       "key":"a",
-      "allowed_modifiers":["COMMAND, SHIFT"]
+      "allowed_modifiers":["COMMAND", "SHIFT"]
     },
     {
       "key":"b",
-      "allowed_modifiers":["ALL"]
+      "allowed_modifiers":["CONTROL"]
     }
   ]
 }

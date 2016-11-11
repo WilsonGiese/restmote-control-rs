@@ -6,6 +6,9 @@ use libc::pid_t;
 use std::thread;
 use std::time::Duration;
 
+pub type Keycode = CGKeyCode;
+pub type Modifier = CGEventFlags;
+
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
     pid: pid_t,
@@ -28,15 +31,15 @@ impl VirtualKeyboard {
     }
 
     /// Simulate a keyboard key press by sending a key-up then key-down event
-    pub fn press_key(&self, keycode: CGKeyCode, flags: Option<CGEventFlags>) -> Result<(), ()> {
+    pub fn press_key(&self, keycode: Keycode, flags: Option<Modifier>) -> Result<(), ()> {
         try!(self.post_keyboard_event(keycode, flags, true));
         self.post_keyboard_event(keycode, flags, false)
     }
 
     /// Post a single keyboard event with optional flags for keycode with the current keydown state
     fn post_keyboard_event(&self,
-        keycode: CGKeyCode,
-        flags: Option<CGEventFlags>,
+        keycode: Keycode,
+        flags: Option<Modifier>,
         keydown: bool
     ) -> Result<(), ()> {
         let event_source = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
@@ -53,7 +56,7 @@ impl VirtualKeyboard {
 }
 
 /// Map of ascii characters to their respective CG Keycodes
-static ASCII_KEYCODE_MAP_LETTERS: &'static [CGKeyCode] =
+static ASCII_KEYCODE_MAP_LETTERS: &'static [Keycode] =
     &[
         // a    b    c    d    e    f    g    h    i    j    k    l    m
         0x00,0x0B,0x08,0x02,0x0E,0x03,0x05,0x04,0x22,0x26,0x28,0x25,0x2E,
@@ -62,13 +65,13 @@ static ASCII_KEYCODE_MAP_LETTERS: &'static [CGKeyCode] =
     ];
 
 /// Map of ascii digits to their respective CG Keycodes
-static ASCII_KEYCODE_MAP_NUMBERS: &'static [CGKeyCode] =
+static ASCII_KEYCODE_MAP_NUMBERS: &'static [Keycode] =
     &[
         // 0    1    2    3    4    5    6    7    8    9
         0x1D,0x12,0x13,0x14,0x15,0x17,0x16,0x1A,0x1C,0x19
     ];
 
-pub fn keycode_from_char(c: char) -> Option<CGKeyCode> {
+pub fn keycode_from_char(c: char) -> Option<Keycode> {
     let i = c as usize;
 
     let mut keycode = match i {
@@ -100,7 +103,7 @@ pub fn keycode_from_char(c: char) -> Option<CGKeyCode> {
     keycode
 }
 
-pub fn keycode_from_str(s: &str) -> Option<CGKeyCode> {
+pub fn keycode_from_str(s: &str) -> Option<Keycode> {
     let mut keycode = None;
     let s = s.to_lowercase();
 
@@ -139,8 +142,8 @@ pub fn keycode_from_str(s: &str) -> Option<CGKeyCode> {
     keycode
 }
 
-/// `CGEventFlags from string. Case is ignored
-pub fn event_flags_from_str(s: &str) -> Option<CGEventFlags> {
+/// `CGEventFlags` from string. Case is ignored
+pub fn modifier_from_str(s: &str) -> Option<Modifier> {
     match &*s.to_lowercase() {
         "shift" => Some(CGEventFlags::Shift),
         "control" => Some(CGEventFlags::Control),
