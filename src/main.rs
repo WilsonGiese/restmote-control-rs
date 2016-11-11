@@ -11,10 +11,6 @@ extern crate rustful;
 
 use clap::{Arg, App, AppSettings};
 
-use std::fmt::Display;
-
-const DEFAULT_KEYPRESS_DELAY: &'static str = "10";
-
 fn main() {
     let app = App::new("RESTMote Control")
         .global_settings(&[AppSettings::ColoredHelp])
@@ -35,12 +31,7 @@ fn main() {
     println!("{}", config);
 
     if let Err(e) = server::run(config) {
-        println!("Failure: {}", e);
+        println!("Server Error: {}", e);
+        std::process::exit(1);
     }
-}
-
-// Print a message and error then exit with status 1
-fn error(msg: &str, error: &Display) {
-    println!("{}: {}", msg, error);
-    std::process::exit(1);
 }

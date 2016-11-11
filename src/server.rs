@@ -3,17 +3,34 @@ use error::RcError;
 use keyboard;
 use keyboard::VirtualKeyboard;
 
+use libc;
+
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
 use std::collections::HashSet;
 use std::io::Read;
 use std::fs::File;
 
-use rustc_serialize::json::Json;
+use rustc_serialize::json;
 
 pub struct KeyboardHandler {
     allowed_keys: HashSet<String>,
     keyboard: VirtualKeyboard,
+}
+
+// Automatically generate `RustcDecodable` and `RustcEncodable` trait
+// implementations
+#[derive(RustcDecodable, RustcEncodable)]
+struct Config  {
+    pid: libc::pid_t,
+    keypress_delay: u64,
+    keys: Vec<Key>,
+}
+
+#[derive(RustcDecodable, RustcEncodable)]
+struct Key {
+    key: String,
+    allowed_modifiers: Vec<String>,
 }
 
 impl KeyboardHandler {
@@ -29,24 +46,16 @@ impl KeyboardHandler {
         let mut json_str = String::new();
         try!(config.read_to_string(&mut json_str));
 
-        let json = try!(Json::from_str(&json_str));
+        // let json = try!(Json::from_str(&json_str));
+        let config: Config = try!(json::decode(json_str.as_str()));
 
         let mut allowed_keys = HashSet::new();
+        for key in config.keys {
+            allowed_keys.insert(key.key);
+        }
 
-        match json.as_array() {
-            Some(array) => {
-                for key in array {
-                    if let Some(key) = key.as_string() {
-                        allowed_keys.insert(key.to_string());
-                    } else {
-                        return Err(RcError::Config(String::from("Expected key as string")))
-                    }
-                }
-            },
-            None => return Err(RcError::Config(String::from("Expected keys as Array")))
-        };
-
-        Ok(KeyboardHandler::new(allowed_keys, VirtualKeyboard::new(0, 0)))
+        Ok(KeyboardHandler::new(allowed_keys,
+            VirtualKeyboard::new(config.pid, config.keypress_delay)))
     }
 }
 

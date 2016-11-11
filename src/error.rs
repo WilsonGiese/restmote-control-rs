@@ -7,7 +7,7 @@ use std::fmt;
 
 #[derive(Debug)]
 pub enum RcError {
-    Parser(json::ParserError),
+    Decoder(json::DecoderError),
     Io(io::Error),
     Server(rustful::HttpError),
     Config(String),
@@ -19,9 +19,9 @@ impl From<io::Error> for RcError {
     }
 }
 
-impl From<json::ParserError> for RcError {
-    fn from(result: json::ParserError) -> RcError {
-        RcError::Parser(result)
+impl From<json::DecoderError> for RcError {
+    fn from(result: json::DecoderError) -> RcError {
+        RcError::Decoder(result)
     }
 }
 
@@ -34,7 +34,7 @@ impl From<rustful::HttpError> for RcError {
 impl fmt::Display for RcError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            RcError::Parser(ref e) => write!(f, "{}", e),
+            RcError::Decoder(ref e) => write!(f, "{}", e),
             RcError::Io(ref e) => write!(f, "{}", e),
             RcError::Config(ref e) => write!(f, "{}", e),
             RcError::Server(ref e) => write!(f, "{}", e),
