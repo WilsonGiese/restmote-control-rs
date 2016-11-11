@@ -83,7 +83,7 @@ dependencies = [
 [[package]]
 name = "core-graphics"
 version = "0.4.1"
-source = "git+https://github.com/WilsonGiese/core-graphics-rs#b88ff77b0dfa07617110b45d692225c8fdcae844"
+source = "git+https://github.com/WilsonGiese/core-graphics-rs#b06d4b24805f430b9cd09f7708f4304249e8f039"
 dependencies = [
  "core-foundation 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.17 (registry+https://github.com/rust-lang/crates.io-index)",
