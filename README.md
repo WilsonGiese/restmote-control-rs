@@ -9,7 +9,7 @@ application agnostic.
 ## Tasks
 - [x] Send keyboard events to a specified application on OSX with CG Framework
 - [x] Create REST services to invoke keyboard events
-- [ ] Configurable with simple JSON formatted file
+- [x] Configurable with simple JSON formatted file
 - [ ] Interface with Windows SendKeys API (Stretch)
 - [ ] Linux compatible (Stretch)
 
