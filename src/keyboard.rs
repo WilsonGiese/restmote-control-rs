@@ -14,6 +14,12 @@ use std::time::Duration;
 pub type Keycode = CGKeyCode;
 pub type Modifier = CGEventFlags;
 
+pub enum KeyboardAction {
+    Up,     // Release key
+    Down,   // Press key
+    Cycle,  // Pres then release key
+}
+
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
     pid: pid_t,
