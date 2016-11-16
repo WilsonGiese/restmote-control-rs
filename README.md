@@ -12,6 +12,3 @@ application agnostic.
 - [x] Configurable with simple JSON formatted file
 - [ ] Interface with Windows SendKeys API (Stretch)
 - [ ] Linux compatible (Stretch)
-
-## Disclaimer
-This project has just begun and is no where near ready to use
