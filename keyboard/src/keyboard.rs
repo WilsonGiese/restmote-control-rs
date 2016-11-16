@@ -45,7 +45,7 @@ pub struct VirtualKeyboard {
 
 impl VirtualKeyboard {
 
-    /// Create a new VirtualKeyboard connected to the target pid
+    ///! Create a new VirtualKeyboard connected to the target pid
     pub fn new(pid: Pid, delay_duration: u64) -> VirtualKeyboard {
         VirtualKeyboard {
             pid: pid,
@@ -53,7 +53,7 @@ impl VirtualKeyboard {
         }
     }
 
-    /// Simulate a keyboard key press by sending a key-up then key-down event
+    ///! Simulate a keyboard key press by sending a key-up then key-down event
     pub fn press_key(&self,
         keycode: Keycode,
         flags: Option<Modifier>,
@@ -70,7 +70,7 @@ impl VirtualKeyboard {
         }
     }
 
-    /// Post a single keyboard event with optional flags for keycode with the current keydown state
+    ///! Post a single keyboard event with optional flags for keycode with the current keydown state
     fn post_keyboard_event(&self,
         keycode: Keycode,
         flags: Option<Modifier>,
