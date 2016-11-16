@@ -1,71 +1,8 @@
-///! Abstraction over the `CGEvents` lib to route virtual keyboard presses to an application using
-///! its pid
-///!
-///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
+///! Utilities for dealing with a Virtua lKeyboard through the CGEvents API
 
-use core_graphics::event::{CGEvent,CGEventFlags,CGKeyCode};
-use core_graphics::event_source::{CGEventSource,CGEventSourceStateID};
+use core_graphics::event::CGEventFlags;
 
-use libc::pid_t;
-
-use std::thread;
-use std::time::Duration;
-
-pub type Keycode = CGKeyCode;
-pub type Modifier = CGEventFlags;
-
-pub enum KeyboardAction {
-    Up,     // Release key
-    Down,   // Press key
-    Cycle,  // Pres then release key
-}
-
-pub struct VirtualKeyboard {
-    /// Target application PID where keyboard events will be sent
-    pid: pid_t,
-
-    /// Amount of time the thread will sleep before posting a keyboard event.
-    /// This isn't required according to any documentation for the `CGEvents` API, but without this
-    /// some events posted do not appear to make it to the target application (pid). Tuning seems
-    /// required for individual applications; most times short durations like 10ms work, but other
-    /// applications can take upwards of 50ms before events are reliably delivered
-    delay_duration: Duration,
-}
-
-impl VirtualKeyboard {
-
-    /// Create a new VirtualKeyboard connected to the target pid
-    pub fn new(pid: pid_t, delay_duration: u64) -> VirtualKeyboard {
-        VirtualKeyboard {
-            pid: pid,
-            delay_duration: Duration::from_millis(delay_duration),
-        }
-    }
-
-    /// Simulate a keyboard key press by sending a key-up then key-down event
-    pub fn press_key(&self, keycode: Keycode, flags: Option<Modifier>) -> Result<(), ()> {
-        try!(self.post_keyboard_event(keycode, flags, true));
-        self.post_keyboard_event(keycode, flags, false)
-    }
-
-    /// Post a single keyboard event with optional flags for keycode with the current keydown state
-    fn post_keyboard_event(&self,
-        keycode: Keycode,
-        flags: Option<Modifier>,
-        keydown: bool
-    ) -> Result<(), ()> {
-        let event_source = try!(CGEventSource::new(CGEventSourceStateID::HIDSystemState));
-        let event = try!(CGEvent::new_keyboard_event(event_source, keycode, keydown));
-
-        if let Some(f) = flags {
-            event.set_flags(f)
-        }
-
-        thread::sleep(self.delay_duration);
-        event.post_to_pid(self.pid);
-        Ok(())
-    }
-}
+use super::{Keycode,Modifier};
 
 /// Map of ascii characters to their respective CG Keycodes
 static ASCII_KEYCODE_MAP_LETTERS: &'static [Keycode] =
@@ -83,6 +20,13 @@ static ASCII_KEYCODE_MAP_NUMBERS: &'static [Keycode] =
         0x1D,0x12,0x13,0x14,0x15,0x17,0x16,0x1A,0x1C,0x19
     ];
 
+///! Return a keyode for a char, returns None if there is no known keycode
+///!
+///! ```
+///! let keycode = keycode_from_char('a');
+///! ```
+///!
+///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
 pub fn keycode_from_char(c: char) -> Option<Keycode> {
     let i = c as usize;
 
@@ -115,6 +59,13 @@ pub fn keycode_from_char(c: char) -> Option<Keycode> {
     keycode
 }
 
+///! Return a keyode for a String, returns None if there is no known keycode.
+///!
+///! ```
+///! let keycode = keycode_from_str("escape");
+///! ```
+///!
+///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
 pub fn keycode_from_str(s: &str) -> Option<Keycode> {
     let mut keycode = None;
     let s = s.to_lowercase();
@@ -128,7 +79,7 @@ pub fn keycode_from_str(s: &str) -> Option<Keycode> {
     if keycode == None {
         keycode = match &*s {
             // Command keys
-            "return" => Some(0x24),
+            "return" | "enter" => Some(0x24),
             "tab" => Some(0x30),
             "space" => Some(0x31),
             "delete" => Some(0x33),
@@ -154,7 +105,11 @@ pub fn keycode_from_str(s: &str) -> Option<Keycode> {
     keycode
 }
 
-/// `CGEventFlags` from string. Case is ignored
+///! Return a Modifier from a String
+///!
+///! ```
+///! let modifier = modifier_from_str("shift");
+///! ```
 pub fn modifier_from_str(s: &str) -> Option<Modifier> {
     match &*s.to_lowercase() {
         "shift" => Some(CGEventFlags::Shift),
@@ -163,6 +118,14 @@ pub fn modifier_from_str(s: &str) -> Option<Modifier> {
         "option" | "alternate" | "alt" => Some(CGEventFlags::Alternate),
         _ => None,
     }
+}
+
+#[test]
+fn modifier_from_str_test() {
+    assert_eq!(modifier_from_str("control").unwrap(), Modifier::Control);
+    assert_eq!(modifier_from_str("option").unwrap(), Modifier::Alternate);
+    assert!(modifier_from_str("xyz").is_none());
+    assert!(modifier_from_str("").is_none());
 }
 
 #[test]

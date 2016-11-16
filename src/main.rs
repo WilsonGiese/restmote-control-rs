@@ -1,10 +1,8 @@
 mod error;
-mod keyboard;
 mod server;
 
 extern crate clap;
-extern crate core_graphics;
-extern crate libc;
+extern crate keyboard; 
 extern crate rustc_serialize;
 #[macro_use]
 extern crate rustful;

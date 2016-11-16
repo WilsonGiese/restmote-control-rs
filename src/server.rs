@@ -1,15 +1,14 @@
 use error::RcError;
 
 use keyboard;
-use keyboard::{Keycode,Modifier,VirtualKeyboard};
-
-use libc;
+use keyboard::{Keycode,Modifier,Pid,VirtualKeyboard};
 
 use rustful::{Context,Handler,Response,Server,StatusCode,TreeRouter};
 
 use std::collections::{HashSet,HashMap};
 use std::io::Read;
 use std::fs::File;
+use std::str::FromStr;
 
 use rustc_serialize::json;
 
@@ -21,7 +20,7 @@ pub struct KeyboardHandler {
 
 #[derive(RustcDecodable, RustcEncodable)]
 struct Config  {
-    pid: libc::pid_t,
+    pid: Pid,
     keypress_delay: u64,
     keys: Vec<Key>,
 }
@@ -66,7 +65,8 @@ impl KeyboardHandler {
                     if let Some(m) = keyboard::modifier_from_str(modifier.as_str()) {
                         modifiers.push(m);
                     } else {
-                        return Err(RcError::Config(format!("Unsupported modifier in {}: {}", path, modifier)));
+                        return Err(RcError::Config(format!("Unsupported modifier in {}: {}",
+                            path, modifier)));
                     }
                 }
                 allowed_modifiers.insert(k, modifiers);
@@ -88,6 +88,7 @@ impl Handler for KeyboardHandler {
     ///     {
     ///         key: "a"             (Required)
     ///         modifier: "SHIFT"    (Optional)
+    ///         action: "DOWN"
     ///     }
     fn handle_request(&self, mut context: Context, mut response: Response) {
         let json = match context.body.read_json_body() {
@@ -104,7 +105,7 @@ impl Handler for KeyboardHandler {
                 Some(key) => key,
                 None => {
                     response.set_status(StatusCode::BadRequest);
-                    response.send("Unexpected type for field: key");
+                    response.send("Expected String for field: key");
                     return;
                 },
             },
@@ -123,6 +124,30 @@ impl Handler for KeyboardHandler {
                 return;
             }
         };
+
+        let action = match json.find("action") {
+            Some(action) => match action.as_string() {
+                Some(action) => match keyboard::KeyboardAction::from_str(action) {
+                    Ok(action) => action,
+                    Err(e) => {
+                        response.set_status(StatusCode::BadRequest);
+                        response.send(e);
+                        return;
+                    }
+                },
+                None => {
+                    response.set_status(StatusCode::BadRequest);
+                    response.send("Expected String for field: action");
+                    return;
+                }
+            },
+            None => {
+                response.set_status(StatusCode::BadRequest);
+                response.send("Missing required field: action");
+                return;
+            }
+        };
+        println!("{:?}", action);
 
         // Check if the key is allowed
         if !self.allowed_keys.contains(&keycode) {
@@ -150,7 +175,7 @@ impl Handler for KeyboardHandler {
             }
         }
 
-        if self.keyboard.press_key(keycode, modifier).is_err() {
+        if self.keyboard.press_key(keycode, modifier, action).is_err() {
             response.set_status(StatusCode::InternalServerError);
             response.send(format!("Failed to press key: {}", key));
         }
