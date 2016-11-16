@@ -36,7 +36,7 @@ The server requires a configuration file to be provided during start-up.
 
 ### Config fields
 
-| Key              | Values                                          |
-| ---------------- |:-----------------------------------------------:|
-| allowed_modifiers| SHIFT, CONTROL, COMMAND, OPTION, ALTERNATE, ALT |
+| Key              | Values                                          | Description                                     |
+| ---------------- |:-----------------------------------------------:|------------------------------------------------:|
+| allowed_modifiers| SHIFT, CONTROL, COMMAND, OPTION, ALTERNATE, ALT | This field dictates what modifiers are allowed to be applied to a specific key. For example, if you want to use the 'Q' key, you may not want to allow the 'COMMAND' modifier.| 
 
