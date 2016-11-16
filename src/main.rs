@@ -2,7 +2,7 @@ mod error;
 mod server;
 
 extern crate clap;
-extern crate keyboard; 
+extern crate keyboard;
 extern crate rustc_serialize;
 #[macro_use]
 extern crate rustful;
@@ -25,9 +25,7 @@ fn main() {
         .get_matches();
 
     let config = app.value_of("config").unwrap();
-
-    println!("{}", config);
-
+    
     if let Err(e) = server::run(config) {
         println!("Server Error: {}", e);
         std::process::exit(1);
