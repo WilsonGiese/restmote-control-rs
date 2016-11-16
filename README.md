@@ -12,3 +12,31 @@ application agnostic.
 - [x] Configurable with simple JSON formatted file
 - [ ] Interface with Windows SendKeys API (Stretch)
 - [ ] Linux compatible (Stretch)
+
+## Configuration
+The server requires a configuration file to be provided during start-up. 
+
+### Example config file
+```json
+{
+  "pid":31277,
+  "keypress_delay":10,
+  "keys": [
+    {
+      "key":"a",
+      "allowed_modifiers":["COMMAND", "SHIFT"]
+    },
+    {
+      "key":"b",
+      "allowed_modifiers":["CONTROL"]
+    }
+  ]
+}
+```
+
+### Config fields
+
+| Key              | Values                                          |
+| ---------------- |:-----------------------------------------------:|
+| allowed_modifiers| SHIFT, CONTROL, COMMAND, OPTION, ALTERNATE, ALT |
+
