@@ -36,7 +36,9 @@ The server requires a configuration file to be provided during start-up.
 
 ### Config fields
 
-| Key              | Values                                          | Description                                     |
-| ---------------- |:-----------------------------------------------:|------------------------------------------------:|
-| allowed_modifiers| SHIFT, CONTROL, COMMAND, OPTION, ALTERNATE, ALT | This field dictates what modifiers are allowed to be applied to a specific key. For example, if you want to use the 'Q' key, you may not want to allow the 'COMMAND' modifier.| 
-
+| Key              | Description                                     |
+| ---------------- |:-----------------------------------------------:|
+| pid              | The program identifier (PID) of the target application where keypress events will be sent. |            
+| keypress_delay              | The number of milliseconds to wait between keypresses. | 
+| key              | The application supports generating keyboard events for most keys. Non-character keys like "tab" or "capslock" can also be used. | 
+| allowed_modifiers| The set of modifier keys which are allowed to be used on with the key. Requesting a modidifier that is not allowed with result in a 400 response code. |
