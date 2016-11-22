@@ -22,10 +22,6 @@ static ASCII_KEYCODE_MAP_NUMBERS: &'static [Keycode] =
 
 ///! Return a keyode for a char, returns None if there is no known keycode
 ///!
-///! ```
-///! let keycode = keycode_from_char('a');
-///! ```
-///!
 ///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
 pub fn keycode_from_char(c: char) -> Option<Keycode> {
     let i = c as usize;
@@ -60,10 +56,6 @@ pub fn keycode_from_char(c: char) -> Option<Keycode> {
 }
 
 ///! Return a keyode for a String, returns None if there is no known keycode.
-///!
-///! ```
-///! let keycode = keycode_from_str("escape");
-///! ```
 ///!
 ///! [CGKeyCode Ref](Carbon.framework/Versions/A/Frameworks/HIToolbox.framework/Headers)
 pub fn keycode_from_str(s: &str) -> Option<Keycode> {
@@ -106,10 +98,6 @@ pub fn keycode_from_str(s: &str) -> Option<Keycode> {
 }
 
 ///! Return a Modifier from a String
-///!
-///! ```
-///! let modifier = modifier_from_str("shift");
-///! ```
 pub fn modifier_from_str(s: &str) -> Option<Modifier> {
     match &*s.to_lowercase() {
         "shift" => Some(CGEventFlags::Shift),
@@ -120,29 +108,35 @@ pub fn modifier_from_str(s: &str) -> Option<Modifier> {
     }
 }
 
-#[test]
-fn modifier_from_str_test() {
-    assert_eq!(modifier_from_str("control").unwrap(), Modifier::Control);
-    assert_eq!(modifier_from_str("option").unwrap(), Modifier::Alternate);
-    assert!(modifier_from_str("xyz").is_none());
-    assert!(modifier_from_str("").is_none());
-}
+#[cfg(test)]
+mod tests {
+    use core_graphics::event::CGEventFlags;
+    use super::*;
 
-#[test]
-fn keycode_from_str_test() {
-    assert_eq!(keycode_from_str("a").unwrap(), 0x00);
-    assert_eq!(keycode_from_str("b").unwrap(), 0x0B);
-    assert_eq!(keycode_from_str("p").unwrap(), 0x23);
-    assert_eq!(keycode_from_str("z").unwrap(), 0x06);
-    assert_eq!(keycode_from_str("0").unwrap(), 0x1D);
-    assert_eq!(keycode_from_str("5").unwrap(), 0x17);
-    assert_eq!(keycode_from_str("9").unwrap(), 0x19);
-    assert_eq!(keycode_from_str(";").unwrap(), 0x29);
-    assert_eq!(keycode_from_str("return").unwrap(), 0x24);
-    assert_eq!(keycode_from_str("escape").unwrap(), 0x35);
-    assert_eq!(keycode_from_str("downarrow").unwrap(), 0x7D);
-    assert_eq!(keycode_from_str("uparrow").unwrap(), 0x7E);
-    assert!(keycode_from_str("!").is_none());
-    assert!(keycode_from_str("foobar").is_none());
-    assert!(keycode_from_str("").is_none());
+    #[test]
+    fn modifier_from_str_test() {
+        assert_eq!(modifier_from_str("control").unwrap(), CGEventFlags::Control);
+        assert_eq!(modifier_from_str("option").unwrap(), CGEventFlags::Alternate);
+        assert!(modifier_from_str("xyz").is_none());
+        assert!(modifier_from_str("").is_none());
+    }
+
+    #[test]
+    fn keycode_from_str_test() {
+        assert_eq!(keycode_from_str("a").unwrap(), 0x00);
+        assert_eq!(keycode_from_str("b").unwrap(), 0x0B);
+        assert_eq!(keycode_from_str("p").unwrap(), 0x23);
+        assert_eq!(keycode_from_str("z").unwrap(), 0x06);
+        assert_eq!(keycode_from_str("0").unwrap(), 0x1D);
+        assert_eq!(keycode_from_str("5").unwrap(), 0x17);
+        assert_eq!(keycode_from_str("9").unwrap(), 0x19);
+        assert_eq!(keycode_from_str(";").unwrap(), 0x29);
+        assert_eq!(keycode_from_str("return").unwrap(), 0x24);
+        assert_eq!(keycode_from_str("escape").unwrap(), 0x35);
+        assert_eq!(keycode_from_str("downarrow").unwrap(), 0x7D);
+        assert_eq!(keycode_from_str("uparrow").unwrap(), 0x7E);
+        assert!(keycode_from_str("!").is_none());
+        assert!(keycode_from_str("foobar").is_none());
+        assert!(keycode_from_str("").is_none());
+    }
 }

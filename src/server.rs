@@ -44,13 +44,16 @@ impl KeyboardHandler {
         }
     }
 
-    fn keyboard_handler_from_config(path: &str) -> Result<KeyboardHandler, RcError> {
+    fn keyboard_handler_from_file(path: &str) -> Result<KeyboardHandler, RcError> {
         let mut config = try!(File::open(path));
         let mut json_str = String::new();
         try!(config.read_to_string(&mut json_str));
 
-        // let json = try!(Json::from_str(&json_str));
-        let config: Config = try!(json::decode(json_str.as_str()));
+        KeyboardHandler::keyboard_handler_from_str(json_str.as_str())
+    }
+
+    fn keyboard_handler_from_str(s: &str) -> Result<KeyboardHandler, RcError> {
+        let config: Config = try!(json::decode(s));
 
         let mut allowed_keys = HashSet::new();
         let mut allowed_modifiers = HashMap::new();
@@ -65,13 +68,14 @@ impl KeyboardHandler {
                     if let Some(m) = keyboard::modifier_from_str(modifier.as_str()) {
                         modifiers.push(m);
                     } else {
-                        return Err(RcError::Config(format!("Unsupported modifier in {}: {}",
-                            path, modifier)));
+                        return Err(RcError::Config(format!(
+                            "Configuration Error: Unsupported modifier: {}", modifier)));
                     }
                 }
                 allowed_modifiers.insert(k, modifiers);
             } else {
-                return Err(RcError::Config(format!("Unsupported key in {}: {}", path, key.key)));
+                return Err(RcError::Config(format!(
+                    "Configuration Error: Unsupported key: {}", key.key)));
             }
         }
 
@@ -182,9 +186,8 @@ impl Handler for KeyboardHandler {
     }
 }
 
-
 pub fn run(config: &str) -> Result<(), RcError> {
-    let handler = try!(KeyboardHandler::keyboard_handler_from_config(config));
+    let handler = try!(KeyboardHandler::keyboard_handler_from_file(config));
 
     let router = insert_routes! {
         TreeRouter::new() => {
@@ -203,5 +206,47 @@ pub fn run(config: &str) -> Result<(), RcError> {
         Err(RcError::Server(e))
     } else {
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use keyboard;
+    use std::time::Duration;
+    use super::KeyboardHandler;
+
+    #[test]
+    fn keyboard_handler_from_str_test() {
+        let handler = KeyboardHandler::keyboard_handler_from_str("{
+            \"pid\":1234,
+            \"keypress_delay\":77,
+            \"keys\": [
+                {
+                  \"key\":\"a\",
+                  \"allowed_modifiers\":[\"COMMAND\", \"SHIFT\", \"OPTION\", \"CONTROL\"]
+                },
+                {
+                  \"key\":\"b\",
+                  \"allowed_modifiers\":[\"CONTROL\"]
+                },
+                {
+                  \"key\":\"ENTER\",
+                  \"allowed_modifiers\":[]
+                }
+            ]
+        }").unwrap();
+
+        assert_eq!(handler.keyboard.pid, 1234);
+        assert_eq!(handler.keyboard.delay_duration, Duration::from_millis(77));
+
+        let a = keyboard::keycode_from_str("a").unwrap();
+        let b = keyboard::keycode_from_str("b").unwrap();
+        let d = keyboard::keycode_from_str("d").unwrap();
+        let enter = keyboard::keycode_from_str("ENTER").unwrap();
+
+        assert!(handler.allowed_keys.contains(&a));
+        assert!(handler.allowed_keys.contains(&b));
+        assert!(handler.allowed_keys.contains(&enter));
+        assert!(!handler.allowed_keys.contains(&d));
     }
 }

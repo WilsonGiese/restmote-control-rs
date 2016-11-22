@@ -25,7 +25,7 @@ fn main() {
         .get_matches();
 
     let config = app.value_of("config").unwrap();
-    
+
     if let Err(e) = server::run(config) {
         println!("Server Error: {}", e);
         std::process::exit(1);

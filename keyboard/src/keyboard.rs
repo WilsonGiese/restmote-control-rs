@@ -33,14 +33,14 @@ impl FromStr for KeyboardAction {
 
 pub struct VirtualKeyboard {
     /// Target application PID where keyboard events will be sent
-    pid: Pid,
+    pub pid: Pid,
 
     /// Amount of time the thread will sleep before posting a keyboard event.
     /// This isn't required according to any documentation for the `CGEvents` API, but without this
     /// some events posted do not appear to make it to the target application (pid). Tuning seems
     /// required for individual applications; most times short durations like 10ms work, but other
     /// applications can take upwards of 50ms before events are reliably delivered
-    delay_duration: Duration,
+    pub delay_duration: Duration,
 }
 
 impl VirtualKeyboard {
